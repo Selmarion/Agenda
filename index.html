@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de NOMBRE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .calendar-table th, .calendar-table td {
+            text-align: center;
+            padding: 8px;
+            height: 90px; /* Increased height for better clickability and content */
+        }
+        .calendar-table td {
+            cursor: pointer;
+            border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+            vertical-align: top;
+            position: relative;
+        }
+        .calendar-table td.disabled {
+            cursor: default;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+            color: #9ca3af; /* Tailwind gray-400 */
+        }
+        .calendar-table td.today {
+            background-color: #eff6ff; /* Tailwind blue-100 */
+            font-weight: bold;
+        }
+        .day-number {
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .week-number {
+            font-size: 0.8em;
+            color: #6b7280; /* Tailwind gray-500 */
+            font-weight: normal;
+        }
+        .slot-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+        .slot-indicator.red {
+            background-color: #ef4444; /* Tailwind red-500 */
+        }
+        .slot-indicator.green {
+            background-color: #22c55e; /* Tailwind green-500 */
+        }
+        .slot-indicator.orange { /* For partially booked days */
+            background-color: #f97316; /* Tailwind orange-500 */
+        }
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px; /* Default max-width */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .modal-content-lg { /* For the main booking form */
+             max-width: 700px;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+        }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #d1d5db; /* Tailwind gray-300 */
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: auto 1fr; /* Label and value */
+            gap: 4px 8px; /* Row and column gap */
+            font-size: 0.9em;
+        }
+        .details-grid dt {
+            font-weight: 500;
+            color: #4b5563; /* Tailwind gray-600 */
+        }
+        .details-grid dd {
+            color: #1f2937; /* Tailwind gray-800 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <div class="container mx-auto max-w-5xl bg-white p-4 sm:p-6 rounded-lg shadow-xl">
+        <div class="flex justify-between items-center mb-6">
+            <button id="prevMonth" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">&lt; Atras</button>
+            <h2 id="currentMonthYear" class="text-xl md:text-2xl font-semibold text-gray-700"></h2>
+            <button id="nextMonth" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">Proxima &gt;</button>
+        </div>
+
+        <table class="calendar-table w-full border-collapse">
+            <thead>
+                <tr>
+                    <th class="week-number">Sem.</th>
+                    <th>Lu</th>
+                    <th>Ma</th>
+                    <th>Me</th>
+                    <th>Ju</th>
+                    <th>Vi</th>
+                    <th class="text-red-500">Sa</th>
+                    <th class="text-red-500">Do</th>
+                </tr>
+            </thead>
+            <tbody id="calendarBody">
+                </tbody>
+        </table>
+    </div>
+
+    <div id="slotSelectionModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeSlotSelectionModal()">&times;</span>
+            <h3 class="text-lg font-semibold mb-4" id="slotSelectionDate">Elige una hueco para:</h3>
+            <div id="slotList" class="space-y-3">
+                </div>
+        </div>
+    </div>
+
+    <div id="bookingModal" class="modal">
+        <div class="modal-content modal-content-lg">
+            <span class="close-button" onclick="closeBookingModal()">&times;</span>
+            <h3 class="text-lg font-semibold mb-4" id="bookingModalTitle">Forma booking</h3>
+            <form id="bookingForm">
+                <input type="hidden" id="bookingDate">
+                <input type="hidden" id="bookingTime">
+                <input type="hidden" id="bookingGroupType">
+                <input type="hidden" id="isEditing" value="false"> <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label" for="bookingFormTimeDisplay">Hora:</label>
+                        <input type="text" id="bookingFormTimeDisplay" class="form-input bg-gray-100" readonly>
+                    </div>
+                    <div>
+                        <label class="form-label" for="bookingFormGroupDisplay">Grupo:</label>
+                        <input type="text" id="bookingFormGroupDisplay" class="form-input bg-gray-100" readonly>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <label class="form-label" for="activity">Actividad:</label>
+                    <input type="text" id="activity" name="activity" class="form-input" required>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="form-label" for="schoolName">Cenrto:</label>
+                        <input type="text" id="schoolName" name="schoolName" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label" for="area">Poblacion:</label>
+                        <input type="text" id="area" name="area" class="form-input">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="form-label" for="assistant">Assistente:</label>
+                        <input type="text" id="assistant" name="assistant" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label" for="professor">Proffesor:</label>
+                        <input type="text" id="professor" name="professor" class="form-input">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                     <div>
+                        <label class="form-label" for="course">Curso:</label>
+                        <input type="text" id="course" name="course" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label" for="responsible">Resposable:</label>
+                        <input type="text" id="responsible" name="responsible" class="form-input">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="form-label" for="phone">Telefone:</label>
+                        <input type="tel" id="phone" name="phone" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label" for="email">Email:</label>
+                        <input type="email" id="email" name="email" class="form-input">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="form-label" for="notes">Observaciones:</label>
+                    <textarea id="notes" name="notes" rows="3" class="form-textarea"></textarea>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeBookingModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">Despartar</button>
+                    <button type="submit" id="saveBookingButton" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-content max-w-sm">
+             <span class="close-button" onclick="closeConfirmDeleteModal()">&times;</span>
+            <h3 class="text-lg font-semibold mb-4">Confirmar eliminación / Подтвердить удаление</h3>
+            <p id="confirmDeleteText" class="mb-6">¿Está seguro de que desea eliminar esta reserva? Вы уверены, что хотите удалить это бронирование?</p>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeConfirmDeleteModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">Despartar</button>
+                <button type="button" id="confirmDeleteButton" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">Delete</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Глобальные переменные
+        let currentDate = new Date();
+        let bookings = {}; // { "YYYY-MM-DD": { "HH:MM": {"GroupName": data, ...}, ... }, ... }
+        let currentEditingBookingInfo = null; // { date, time, groupType } для редактирования/удаления
+
+        const calendarBody = document.getElementById('calendarBody');
+        const currentMonthYearEl = document.getElementById('currentMonthYear');
+        const slotSelectionModal = document.getElementById('slotSelectionModal');
+        const slotSelectionDateEl = document.getElementById('slotSelectionDate');
+        const slotListEl = document.getElementById('slotList');
+        const bookingModal = document.getElementById('bookingModal');
+        const bookingModalTitle = document.getElementById('bookingModalTitle');
+        const bookingForm = document.getElementById('bookingForm');
+        const saveBookingButton = document.getElementById('saveBookingButton');
+        const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+        const confirmDeleteText = document.getElementById('confirmDeleteText');
+        const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+
+
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado","Domingo"];
+
+        // --- Функции ---
+
+        // Загрузка бронирований из localStorage
+        function loadBookings() {
+            const storedBookings = localStorage.getItem('calendarBookings');
+            if (storedBookings) {
+                bookings = JSON.parse(storedBookings);
+            }
+        }
+
+        // Сохранение бронирований в localStorage
+        function saveBookings() {
+            localStorage.setItem('calendarBookings', JSON.stringify(bookings));
+        }
+
+        // Получение номера недели ISO 8601
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return weekNo < 10 ? '0' + weekNo : weekNo.toString();
+        }
+
+        // Рендеринг календаря
+        function renderCalendar() {
+            loadBookings();
+            calendarBody.innerHTML = '';
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            currentMonthYearEl.textContent = `${monthNames[month]} ${year}`;
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+            
+            let startingDay = firstDayOfMonth.getDay(); 
+            if (startingDay === 0) startingDay = 7; // Вс = 7
+
+            let date = 1;
+            let calendarRows = [];
+
+            for (let i = 0; i < 6; i++) {
+                let cells = [];
+                let weekDate; 
+
+                if (i === 0 && date <= 7) { 
+                    weekDate = new Date(year, month, date + (7 - startingDay + 1) % 7 ); 
+                } else if (date <= daysInMonth) {
+                     weekDate = new Date(year, month, date);
+                }
+
+                const weekNumCell = document.createElement('td');
+                weekNumCell.classList.add('week-number', 'bg-gray-50');
+                if (weekDate) {
+                     weekNumCell.textContent = getWeekNumber(weekDate);
+                } else {
+                     const tempDateCheck = (i * 7) - startingDay + 2;
+                     if (tempDateCheck <= daysInMonth + 6) { 
+                        const approxDateForWeekNum = new Date(year, month, Math.min(daysInMonth, tempDateCheck));
+                        weekNumCell.textContent = getWeekNumber(approxDateForWeekNum);
+                     } else {
+                        weekNumCell.textContent = '';
+                     }
+                }
+                cells.push(weekNumCell);
+
+                for (let j = 1; j <= 7; j++) { 
+                    const cell = document.createElement('td');
+                    if (i === 0 && j < startingDay) {
+                        cell.classList.add('disabled');
+                    } else if (date > daysInMonth) {
+                        cell.classList.add('disabled');
+                    } else {
+                        const dayNumberDiv = document.createElement('div');
+                        dayNumberDiv.classList.add('day-number');
+                        dayNumberDiv.textContent = date;
+                        cell.appendChild(dayNumberDiv);
+
+                        const fullDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+                        cell.dataset.date = fullDateStr;
+
+                        const today = new Date();
+                        if (date === today.getDate() && year === today.getFullYear() && month === today.getMonth()) {
+                            cell.classList.add('today');
+                        }
+
+                        if (j === 6 || j === 7) { // Сб, Вс
+                            cell.classList.add('disabled', 'text-red-400');
+                        } else {
+                            cell.addEventListener('click', () => openSlotSelectionModal(fullDateStr));
+                            
+                            const { bookedSlotsCount, totalSlots } = getDayBookingStatus(fullDateStr);
+                            const indicator = document.createElement('div');
+                            indicator.classList.add('slot-indicator');
+                            if (bookedSlotsCount === totalSlots) {
+                                indicator.classList.add('red');
+                            } else if (bookedSlotsCount > 0) {
+                                indicator.classList.add('orange');
+                            } else { // 0 booked
+                                indicator.classList.add('green');
+                            }
+                            cell.appendChild(indicator);
+                        }
+                        date++;
+                    }
+                    cells.push(cell);
+                }
+                calendarRows.push(cells);
+                 if (date > daysInMonth && i > 0 && cells.every((c,idx) => idx === 0 || c.classList.contains('disabled'))) {
+                    break; 
+                }
+            }
+            
+            calendarRows.forEach(rowCells => {
+                const row = document.createElement('tr');
+                rowCells.forEach(cell => row.appendChild(cell));
+                calendarBody.appendChild(row);
+            });
+        }
+
+        // Статус бронирования для дня
+        function getDayBookingStatus(dateStr) {
+            let bookedSlotsCount = 0;
+            const totalSlots = 4; // 2 времени * 2 группы
+            const dayBookings = bookings[dateStr];
+
+            if (dayBookings) {
+                if (dayBookings["10:00"]) {
+                    if (dayBookings["10:00"]["Grupo1"]) bookedSlotsCount++;
+                    if (dayBookings["10:00"]["Grupo2"]) bookedSlotsCount++;
+                }
+                if (dayBookings["11:45"]) {
+                    if (dayBookings["11:45"]["Grupo1"]) bookedSlotsCount++;
+                    if (dayBookings["11:45"]["Grupo2"]) bookedSlotsCount++;
+                }
+            }
+            return { bookedSlotsCount, totalSlots };
+        }
+        
+        // Открыть модальное окно выбора/просмотра слота
+        function openSlotSelectionModal(dateStr) {
+            const dateObj = new Date(dateStr + "T00:00:00");
+            const dayOfWeek = dateObj.getDay();
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                console.log("Выходной день, бронирование недоступно. Día libre, reserva no disponible.");
+                return;
+            }
+
+            slotSelectionDateEl.textContent = `Una hueco para: ${dateStr}`;
+            slotListEl.innerHTML = ''; 
+
+            const times = ["10:00", "11:45"];
+            const groups = ["Grupo1", "Grupo2"]; // Названия групп
+            
+            times.forEach(time => {
+                groups.forEach(groupType => {
+                    const dayBookings = bookings[dateStr];
+                    let currentBooking = null;
+                    if (dayBookings && dayBookings[time] && dayBookings[time][groupType]) {
+                        currentBooking = dayBookings[time][groupType];
+                    }
+
+                    const slotDiv = document.createElement('div');
+                    slotDiv.classList.add('p-3', 'border', 'rounded-md', 'shadow-sm');
+                    
+                    const titleDiv = document.createElement('div');
+                    titleDiv.classList.add('font-semibold', 'text-md', 'mb-2');
+                    titleDiv.textContent = `${time} - ${groupType}`;
+                    slotDiv.appendChild(titleDiv);
+
+                    if (currentBooking) {
+                        slotDiv.classList.add('bg-red-50', 'border-red-200');
+                        
+                        const detailsDl = document.createElement('dl');
+                        detailsDl.classList.add('details-grid', 'mb-3');
+                        const detailsToShow = {
+                            "Actividad / Активность": currentBooking.activity,
+                            "Centro / Центр": currentBooking.schoolName,
+                            "Responsable / Ответственный": currentBooking.responsible,
+                            "Email": currentBooking.email
+                        };
+                        for (const [key, value] of Object.entries(detailsToShow)) {
+                            if (value) {
+                                const dt = document.createElement('dt');
+                                dt.textContent = key + ":";
+                                const dd = document.createElement('dd');
+                                dd.textContent = value;
+                                detailsDl.appendChild(dt);
+                                detailsDl.appendChild(dd);
+                            }
+                        }
+                        slotDiv.appendChild(detailsDl);
+
+                        const buttonsDiv = document.createElement('div');
+                        buttonsDiv.classList.add('flex', 'space-x-2', 'justify-end', 'mt-2');
+
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Corregir.';
+                        editButton.classList.add('px-3', 'py-1', 'bg-yellow-500', 'text-white', 'rounded-md', 'text-sm', 'hover:bg-yellow-600');
+                        editButton.onclick = () => openBookingModal(true, currentBooking, dateStr, time, groupType);
+                        buttonsDiv.appendChild(editButton);
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.classList.add('px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'text-sm', 'hover:bg-red-600');
+                        deleteButton.onclick = () => confirmDeletion(dateStr, time, groupType);
+                        buttonsDiv.appendChild(deleteButton);
+                        
+                        if (currentBooking.email) {
+                            const emailButton = document.createElement('button');
+                            emailButton.textContent = 'Email';
+                            emailButton.classList.add('px-3', 'py-1', 'bg-blue-500', 'text-white', 'rounded-md', 'text-sm', 'hover:bg-blue-600');
+                            emailButton.onclick = () => sendEmailForBooking(currentBooking, dateStr, time, groupType);
+                            buttonsDiv.appendChild(emailButton);
+                        }
+                        slotDiv.appendChild(buttonsDiv);
+
+                    } else {
+                        slotDiv.classList.add('bg-green-50', 'border-green-200');
+                        const statusP = document.createElement('p');
+                        statusP.textContent = 'libre';
+                        statusP.classList.add('text-green-700', 'mb-2');
+                        slotDiv.appendChild(statusP);
+
+                        const bookButton = document.createElement('button');
+                        bookButton.textContent = 'Booking';
+                        bookButton.classList.add('w-full', 'px-3', 'py-2', 'bg-green-500', 'text-white', 'rounded-md', 'text-sm', 'hover:bg-green-600');
+                        bookButton.onclick = () => {
+                            openBookingModal(false, null, dateStr, time, groupType);
+                        };
+                        slotDiv.appendChild(bookButton);
+                    }
+                    slotListEl.appendChild(slotDiv);
+                });
+            });
+            slotSelectionModal.style.display = 'flex';
+        }
+
+        function closeSlotSelectionModal() {
+            slotSelectionModal.style.display = 'none';
+        }
+
+        // Открыть модальное окно бронирования (для нового или редактирования)
+        function openBookingModal(isEdit = false, data = null, date, time, groupType) {
+            closeSlotSelectionModal();
+            bookingForm.reset(); 
+
+            document.getElementById('bookingDate').value = date;
+            document.getElementById('bookingTime').value = time;
+            document.getElementById('bookingGroupType').value = groupType;
+            document.getElementById('bookingFormTimeDisplay').value = time; // Отображение времени
+            document.getElementById('bookingFormGroupDisplay').value = groupType; // Отображение группы
+
+            currentEditingBookingInfo = { date, time, groupType }; // Сохраняем для submit
+
+            if (isEdit && data) {
+                document.getElementById('isEditing').value = "true";
+                bookingModalTitle.textContent = "Editar reserva / Редактировать бронирование";
+                saveBookingButton.textContent = "Renovar / Обновить";
+                saveBookingButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                saveBookingButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+
+                // Заполняем форму данными
+                document.getElementById('activity').value = data.activity || '';
+                document.getElementById('schoolName').value = data.schoolName || '';
+                document.getElementById('area').value = data.area || '';
+                document.getElementById('assistant').value = data.assistant || '';
+                document.getElementById('professor').value = data.professor || '';
+                document.getElementById('course').value = data.course || '';
+                document.getElementById('responsible').value = data.responsible || '';
+                document.getElementById('phone').value = data.phone || '';
+                document.getElementById('email').value = data.email || '';
+                document.getElementById('notes').value = data.notes || '';
+            } else {
+                document.getElementById('isEditing').value = "false";
+                bookingModalTitle.textContent = "Formulario de reserva";
+                saveBookingButton.textContent = "Guardar";
+                saveBookingButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                saveBookingButton.classList.add('bg-green-500', 'hover:bg-green-600');
+            }
+            bookingModal.style.display = 'flex';
+        }
+
+
+        function closeBookingModal() {
+            bookingModal.style.display = 'none';
+            bookingForm.reset();
+            currentEditingBookingInfo = null; // Сбрасываем информацию о редактировании
+            document.getElementById('isEditing').value = "false"; // Сбрасываем флаг
+        }
+
+        // Обработка отправки формы бронирования
+        bookingForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const isEditing = document.getElementById('isEditing').value === "true";
+            // Используем currentEditingBookingInfo, так как оно устанавливается при открытии модального окна
+            const date = currentEditingBookingInfo.date; 
+            const time = currentEditingBookingInfo.time;
+            const groupType = currentEditingBookingInfo.groupType;
+
+
+            const bookingData = {
+                activity: document.getElementById('activity').value,
+                schoolName: document.getElementById('schoolName').value,
+                area: document.getElementById('area').value,
+                assistant: document.getElementById('assistant').value,
+                professor: document.getElementById('professor').value,
+                course: document.getElementById('course').value,
+                responsible: document.getElementById('responsible').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                notes: document.getElementById('notes').value,
+            };
+
+            if (!bookings[date]) {
+                bookings[date] = {};
+            }
+            if (!bookings[date][time]) {
+                bookings[date][time] = {};
+            }
+            bookings[date][time][groupType] = bookingData;
+
+            saveBookings();
+            closeBookingModal();
+            renderCalendar(); 
+            // Можно добавить сообщение об успехе
+            alert(isEditing ? 'Reserva actualizada!' : 'Reserva guardada!');
+        });
+
+        // Подтверждение удаления
+        function confirmDeletion(date, time, groupType) {
+            currentEditingBookingInfo = { date, time, groupType }; // Сохраняем для фактического удаления
+            const bookingDetails = bookings[date]?.[time]?.[groupType];
+            confirmDeleteText.textContent = `Eliminar una reserva para "${bookingDetails?.schoolName || 'N/A'}" в ${time} (${groupType}) ${date}?`;
+            confirmDeleteModal.style.display = 'flex';
+        }
+
+        function closeConfirmDeleteModal() {
+            confirmDeleteModal.style.display = 'none';
+            currentEditingBookingInfo = null;
+        }
+        
+        confirmDeleteButton.onclick = function() {
+            if (currentEditingBookingInfo) {
+                const { date, time, groupType } = currentEditingBookingInfo;
+                if (bookings[date] && bookings[date][time] && bookings[date][time][groupType]) {
+                    delete bookings[date][time][groupType];
+                    // Если в этом времени больше нет групп, удаляем объект времени
+                    if (Object.keys(bookings[date][time]).length === 0) {
+                        delete bookings[date][time];
+                    }
+                    // Если на эту дату больше нет бронирований, удаляем объект даты
+                    if (Object.keys(bookings[date]).length === 0) {
+                        delete bookings[date];
+                    }
+                    saveBookings();
+                    renderCalendar();
+                    closeSlotSelectionModal(); // Закрываем, так как слот мог измениться
+                    alert('Reserva de forma remota.');
+                }
+            }
+            closeConfirmDeleteModal();
+        };
+
+        // Отправка Email
+        function sendEmailForBooking(bookingData, date, time, groupType) {
+            if (!bookingData || !bookingData.email) {
+                alert("No se proporciona ningún correo electrónico para esta reserva. Email не указан для этого бронирования.");
+                return;
+            }
+            const subject = `Confirmación de la reserva: ${bookingData.activity || 'Actividad'} - ${date} ${time}`;
+            const body = `Hola, ${bookingData.responsible || bookingData.schoolName || ''},\n\nEs la confirmación de su reserva:\nActividad: ${bookingData.activity || 'N/A'}\nCentro: ${bookingData.schoolName || 'N/A'}\nFecha: ${date}\nHora: ${time}\nGrupo: ${groupType}\n\nObservaciones: ${bookingData.notes || '-'}\n\nCon saludos,\nnuestra XXXxxxxx`;
+            
+            const mailtoLink = `mailto:${bookingData.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+        }
+
+
+        // Навигация по месяцам
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        
+        // Закрытие модальных окон по клику вне их контента или по Esc
+        window.onclick = function(event) {
+            if (event.target == slotSelectionModal) {
+                closeSlotSelectionModal();
+            }
+            if (event.target == bookingModal) {
+                closeBookingModal();
+            }
+            if (event.target == confirmDeleteModal) {
+                closeConfirmDeleteModal();
+            }
+        }
+        window.onkeydown = function(event) {
+            if (event.key === "Escape") {
+                closeSlotSelectionModal();
+                closeBookingModal();
+                closeConfirmDeleteModal();
+            }
+        }
+
+        // Инициализация
+        loadBookings();
+        renderCalendar();
+
+    </script>
+</body>
+</html>

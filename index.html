@@ -458,9 +458,9 @@
                         const detailsDl = document.createElement('dl');
                         detailsDl.classList.add('details-grid', 'mb-3');
                         const detailsToShow = {
-                            "Actividad / Активность": currentBooking.activity,
-                            "Centro / Центр": currentBooking.schoolName,
-                            "Responsable / Ответственный": currentBooking.responsible,
+                            "Actividad": currentBooking.activity,
+                            "Centro": currentBooking.schoolName,
+                            "Responsable": currentBooking.responsible,
                             "Email": currentBooking.email
                         };
                         for (const [key, value] of Object.entries(detailsToShow)) {

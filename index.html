@@ -789,7 +789,7 @@
                 // exportBookingsToCSV(); // Можно экспортировать после удаления
                 renderCalendar();
                 closeSlotSelectionModal(); 
-                alert('Бронирование удалено.');
+                alert('Reserva de forma remota.');
 
             } catch (error) {
                 console.error("Ошибка при удалении бронирования:", error);
@@ -805,7 +805,7 @@
             }
             const school = bookingData.school_name || bookingData.schoolName;
             const subject = `Confirmación de la reserva: ${bookingData.activity || 'Actividad'} - ${date} ${time}`;
-            const body = `Hola, ${bookingData.responsible || school || ''},\n\nesta es la confirmación de su reserv:\Actividad: ${bookingData.activity || 'N/A'}\nCentro: ${school || 'N/A'}\nFecha: ${date}\nHora: ${time}\nGrupo: ${groupType}\n\nObservaciones: ${bookingData.notes || '-'}\n\nAtentamente,\nsu Organización_Teatro_de_nombre`;
+            const body = `Hola, ${bookingData.responsible || school || ''},\nesta es la confirmación de su reserv. \n\Actividad: ${bookingData.activity || 'N/A'}\nCentro: ${school || 'N/A'}\nFecha: ${date}\nHora: ${time}\nGrupo: ${groupType}\n\nObservaciones: ${bookingData.notes || '-'}\n\nAtentamente,\nsu Teatro_de_Carlet`;
             const mailtoLink = `mailto:${bookingData.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
         }

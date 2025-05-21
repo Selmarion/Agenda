@@ -361,8 +361,8 @@
         function exportBookingsToCSV() {
             const headers = [
                 "ID", "Fecha", "Hora", "Grupo", "Actividad", "Centro", "localidad",
-                "Asistente", "Profesor", "Curso", "Resposable",
-                "Telefone", "Email", "Observaciones" // Добавлены все поля из SQL
+                "Nº Asistentes", "Nº Profesores", "Curso", "Resposable",
+                "Teléfono", "Email", "Observaciones" // Добавлены все поля из SQL
             ];
             let csvContent = headers.map(escapeCSVField).join(",") + "\r\n";
 

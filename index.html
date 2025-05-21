@@ -206,11 +206,11 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label class="form-label" for="assistant">Asistente:</label>
+                        <label class="form-label" for="assistant">Nº Asistentes:</label>
                         <input type="text" id="assistant" name="assistant" class="form-input">
                     </div>
                     <div>
-                        <label class="form-label" for="professor">Proffesor:</label>
+                        <label class="form-label" for="professor">Nº Profesores:</label>
                         <input type="text" id="professor" name="professor" class="form-input">
                     </div>
                 </div>
@@ -228,7 +228,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label class="form-label" for="phone">Telefone:</label>
+                        <label class="form-label" for="phone">Teléfono:</label>
                         <input type="tel" id="phone" name="phone" class="form-input">
                     </div>
                     <div>
@@ -805,7 +805,7 @@
             }
             const school = bookingData.school_name || bookingData.schoolName;
             const subject = `Confirmación de la reserva: ${bookingData.activity || 'Actividad'} - ${date} ${time}`;
-            const body = `Hola, ${bookingData.responsible || school || ''},\nesta es la confirmación de su reserv. \n\Actividad: ${bookingData.activity || 'N/A'}\nCentro: ${school || 'N/A'}\nFecha: ${date}\nHora: ${time}\nGrupo: ${groupType}\n\nObservaciones: ${bookingData.notes || '-'}\n\nAtentamente,\nsu Teatro_de_Carlet`;
+            const body = `Hola, ${bookingData.responsible || school || ''},\nesta es la confirmación de su reserv. \n\Actividad: ${bookingData.activity || 'N/A'}\nCentro: ${school || 'N/A'}\nFecha: ${date}\nHora: ${time}\nGrupo: ${groupType}\n\nObservaciones: ${bookingData.notes || '-'}\n\nAtentamente,\nsu Teatro de Carlet`;
             const mailtoLink = `mailto:${bookingData.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
         }

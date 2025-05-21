@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda-Diario</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+// Автообновление каждые 30 секунд
+setInterval(() => {
+    console.log("Автообновление данных с сервера...");
+    loadBookingsFromServer();
+}, 30000);
+
+</script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -99,14 +106,13 @@
             color: black;
             text-decoration: none;
         }
-        .form-input, .form-textarea, .form-select { /* Added .form-select for styling consistency */
+        .form-input, .form-textarea {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
             border: 1px solid #d1d5db; /* Tailwind gray-300 */
             border-radius: 4px;
             box-sizing: border-box;
-            background-color: #fff; /* Ensure select has a background */
         }
         .form-label {
             display: block;
@@ -191,7 +197,7 @@
                 
                 <div class="mt-4">
                     <label class="form-label" for="activity">Actividad:</label>
-                    <select id="activity" name="activity" class="form-select" required>
+                    <select id="activity" name="activity" class="form-input" required>
                         <option value="">Seleccione una opción</option>
                         <option value="Teatro">Teatro</option>
                         <option value="Visita+Taller">Visita+Taller</option>
@@ -210,11 +216,10 @@
                     </div>
                 </div>
                 
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
                         <label class="form-label" for="assistant">Nº Asistentes:</label>
-                        <select id="assistant" name="assistant" class="form-select">
+                        <select id="assistant" name="assistant" class="form-input" required>
                             <option value="">Seleccione cantidad</option>
                             <option value="1-3">1-3</option>
                             <option value="4-6">4-6</option>
@@ -226,7 +231,7 @@
                     </div>
                     <div>
                         <label class="form-label" for="professor">Nº Profesores:</label>
-                        <select id="professor" name="professor" class="form-select">
+                        <select id="professor" name="professor" class="form-input" required>
                             <option value="">Seleccione cantidad</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -239,7 +244,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
+                     <div>
                         <label class="form-label" for="course">Curso:</label>
                         <input type="text" id="course" name="course" class="form-input">
                     </div>
@@ -251,7 +256,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label class="form-label" for="phone">Teléfono:</label>
+                        <label class="form-label" for="phone">Telefone:</label>
                         <input type="tel" id="phone" name="phone" class="form-input">
                     </div>
                     <div>
@@ -289,11 +294,14 @@
     <script>
         // Глобальные переменные
         let currentDate = new Date();
+        // 'bookings' будет хранить данные. При работе с бэкэндом, он будет загружаться с сервера.
+        // Формат: { "YYYY-MM-DD": { "HH:MM": {"GroupName": {id: 1, ...data}, ...}, ... }, ... }
+        // 'id' здесь - это ID из SQL таблицы, если данные пришли с бэкэнда.
         let bookings = {}; 
-        let currentEditingBookingInfo = null; 
+        let currentEditingBookingInfo = null; // { date, time, groupType, id (optional) }
 
-        // URL API бэкэнда
-        const API_BASE_URL = '/api/agenda'; 
+        // URL вашего бэкэнд API (пример)
+        const API_BASE_URL = '/api/agenda'; // Замените на реальный URL вашего API
 
         // Элементы DOM
         const calendarBody = document.getElementById('calendarBody');
@@ -310,51 +318,51 @@
         const confirmDeleteButton = document.getElementById('confirmDeleteButton');
         const exportCsvButton = document.getElementById('exportCsvButton');
 
+        // Константы
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado","Domingo"];
 
-        // --- Функции работы с данными ---
+        // --- Функции работы с данными (с комментариями для бэкэнд интеграции) ---
 
+        // Загрузка бронирований
         async function loadBookingsFromServer() {
             console.log("Intentando descargar reservas desde el servidor...");
             try {
-                const response = await fetch(API_BASE_URL);
-                if (!response.ok) {
-                     throw new Error(`Error HTTP! estado: ${response.status} ${response.statusText}`);
-                }
-                const serverBookings = await response.json();
+                // РЕАЛИЗАЦИЯ БЭКЭНДА: GET-запрос к вашему API для получения всех бронирований
+                // const response = await fetch(API_BASE_URL);
+                // if (!response.ok) {
+                //     throw new Error(`HTTP error! status: ${response.status}`);
+                // }
+                // const serverBookings = await response.json(); // Ожидается массив объектов бронирований
                 
-                bookings = {}; 
-                serverBookings.forEach(item => {
-                    const date = item.booking_date; 
-                    const time = item.booking_time ? item.booking_time.substring(0, 5) : '00:00'; 
-                    const group = item.group_type;
-                    if (!bookings[date]) bookings[date] = {};
-                    if (!bookings[date][time]) bookings[date][time] = {};
-                    bookings[date][time][group] = item; 
-                });
-                console.log("Бронирования успешно загружены с сервера и обработаны:", bookings);
+                // // Преобразование массива с сервера в структуру 'bookings'
+                // bookings = {}; // Очищаем текущие локальные данные
+                // serverBookings.forEach(item => {
+                //     const date = item.booking_date; // Предполагаем, что поля соответствуют SQL
+                //     const time = item.booking_time.substring(0, 5); // HH:MM
+                //     const group = item.group_type;
+                //     if (!bookings[date]) bookings[date] = {};
+                //     if (!bookings[date][time]) bookings[date][time] = {};
+                //     bookings[date][time][group] = item; // Сохраняем весь объект, включая item.id
+                // });
+                // console.log("Бронирования успешно загружены с сервера и обработаны.");
+
+                
 
             } catch (error) {
                 console.error("Ошибка при загрузке бронирований с сервера:", error);
-                alert("No se pudo descargar la información de reserva del servidor. Intentando descargar desde el almacenamiento local (si está disponible).   Не удалось загрузить данные бронирований с сервера. Попытка загрузки из локального хранилища (если доступно). ");
+                alert("Не удалось загрузить данные бронирований. Попробуйте позже.");
+                
                 const storedBookings = localStorage.getItem('calendarBookings');
-                if (storedBookings) {
-                    bookings = JSON.parse(storedBookings);
-                    console.log("Данные загружены из localStorage (резервная копия).");
-                } else {
-                    bookings = {};
-                    console.log("Локальное хранилище пусто.");
-                }
+                if (storedBookings) bookings = JSON.parse(storedBookings); else bookings = {};
             }
-            renderCalendar(); 
+            renderCalendar(); // Перерисовываем календарь после загрузки данных
         }
         
-        function saveBookingsToLocalStorage() {
-            localStorage.setItem('calendarBookings', JSON.stringify(bookings));
-            console.log("Бронирования сохранены в localStorage (для отладки/оффлайн).");
-        }
+        // Сохранение бронирований (локально, для примера)
+        function saveBookingsToLocalStorage() { /* отключено */ }
 
+        // Экранирование поля для CSV
         function escapeCSVField(field) {
             if (field === null || typeof field === 'undefined') return '';
             const stringField = String(field);
@@ -364,11 +372,12 @@
             return stringField;
         }
 
+        // Экспорт всех бронирований (текущих в 'bookings') в CSV файл
         function exportBookingsToCSV() {
             const headers = [
                 "ID", "Fecha", "Hora", "Grupo", "Actividad", "Centro", "localidad",
-                "Nº Asistentes", "Nº Profesores", "Curso", "Resposable",
-                "Teléfono", "Email", "Observaciones"
+                "Asistente", "Profesor", "Curso", "Resposable",
+                "Telefone", "Email", "Observaciones" // Добавлены все поля из SQL
             ];
             let csvContent = headers.map(escapeCSVField).join(",") + "\r\n";
 
@@ -382,9 +391,9 @@
                     for (const groupType of sortedGroups) {
                         const bookingData = timeSlots[groupType];
                         const row = [
-                            bookingData.id || '', 
+                            bookingData.id || '', // ID из базы данных, если есть
                             date, time, groupType,
-                            bookingData.activity, bookingData.school_name || bookingData.schoolName, 
+                            bookingData.activity, bookingData.school_name || bookingData.schoolName, // Учитываем оба варианта именования
                             bookingData.area, bookingData.assistant, bookingData.professor,
                             bookingData.course, bookingData.responsible, bookingData.phone,
                             bookingData.email, bookingData.notes
@@ -394,7 +403,7 @@
                 }
             }
 
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); 
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
@@ -406,7 +415,7 @@
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
             } else {
-                alert("La exportación a CSV no es compatible con su navegador.  Экспорт в CSV не поддерживается вашим браузером.");
+                alert("Экспорт в CSV не поддерживается вашим браузером.");
             }
         }
         exportCsvButton.addEventListener('click', exportBookingsToCSV);
@@ -422,6 +431,7 @@
         }
 
         function renderCalendar() {
+            // `bookings` уже должны быть загружены к этому моменту
             calendarBody.innerHTML = '';
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
@@ -430,15 +440,13 @@
             const firstDayOfMonth = new Date(year, month, 1);
             const lastDayOfMonth = new Date(year, month + 1, 0);
             const daysInMonth = lastDayOfMonth.getDate();
-            
-            let startingDay = firstDayOfMonth.getDay(); // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
-            if (startingDay === 0) startingDay = 7; // Map Sunday to 7 for consistency with j loop (1=Mon, ..., 7=Sun)
-
+            let startingDay = firstDayOfMonth.getDay(); 
+            if (startingDay === 0) startingDay = 7; // Вс = 7
 
             let dateCounter = 1;
             let calendarRows = [];
 
-            for (let i = 0; i < 6; i++) { // Max 6 rows for a month
+            for (let i = 0; i < 6; i++) {
                 let cells = [];
                 let weekDateForNumber; 
                 if (i === 0 && dateCounter <= 7) { 
@@ -454,12 +462,11 @@
                 } else { weekNumCell.textContent = ''; }
                 cells.push(weekNumCell);
 
-                // j loop: 1=Monday, 2=Tuesday, ..., 6=Saturday, 7=Sunday
-                for (let j = 1; j <= 7; j++) { 
+                for (let j = 1; j <= 7; j++) {
                     const cell = document.createElement('td');
-                    if (i === 0 && j < startingDay) { // Empty cells before the first day of the month
+                    if (i === 0 && j < startingDay) {
                         cell.classList.add('disabled');
-                    } else if (dateCounter > daysInMonth) { // Empty cells after the last day of the month
+                    } else if (dateCounter > daysInMonth) {
                         cell.classList.add('disabled');
                     } else {
                         const dayNumberDiv = document.createElement('div');
@@ -475,10 +482,9 @@
                             cell.classList.add('today');
                         }
 
-                        // Disable weekends (Saturday j=6, Sunday j=7)
-                        if (j === 6 || j === 7) { 
+                        if (j === 6 || j === 7) { // Сб, Вс
                             cell.classList.add('disabled', 'text-red-400');
-                        } else { // Weekdays (Monday j=1 to Friday j=5)
+                        } else {
                             cell.addEventListener('click', () => openSlotSelectionModal(fullDateStr));
                             const { bookedSlotsCount, totalSlots } = getDayBookingStatus(fullDateStr);
                             const indicator = document.createElement('div');
@@ -507,7 +513,7 @@
 
         function getDayBookingStatus(dateStr) {
             let bookedSlotsCount = 0;
-            const totalSlots = 4; 
+            const totalSlots = 4; // 2 времени * 2 группы
             const dayBookings = bookings[dateStr];
             if (dayBookings) {
                 ["10:00", "11:45"].forEach(time => {
@@ -522,19 +528,9 @@
         }
         
         function openSlotSelectionModal(dateStr) {
-            console.log("[DEBUG] openSlotSelectionModal called for date:", dateStr);
-            // Используем 'T00:00:00Z' для явного указания UTC, чтобы избежать смещения дня из-за локального часового пояса
-            const dateObj = new Date(dateStr + "T00:00:00Z"); 
-            const dayOfWeek = dateObj.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-            
-            console.log("[DEBUG] Parsed date object:", dateObj.toUTCString());
-            console.log("[DEBUG] Calculated dayOfWeek (0=Sun, 1=Mon, ...):", dayOfWeek);
-
-            // Проверяем, является ли день выходным (суббота или воскресенье)
-            if (dayOfWeek === 0 || dayOfWeek === 6) {
-                console.log("[DEBUG] Day is a weekend (Sun/Sat), returning.");
-                return; // Не открывать модальное окно для выходных
-            }
+            const dateObj = new Date(dateStr + "T00:00:00");
+            const dayOfWeek = dateObj.getDay();
+             if (dayOfWeek === 0 || dayOfWeek === 6) return;
 
             slotSelectionDateEl.textContent = `Una hueco para: ${dateStr}`;
             slotListEl.innerHTML = ''; 
@@ -544,7 +540,7 @@
             times.forEach(time => {
                 groups.forEach(groupType => {
                     const dayBookings = bookings[dateStr];
-                    let currentBooking = null; 
+                    let currentBooking = null; // Это будет объект бронирования из SQL, включая ID
                     if (dayBookings && dayBookings[time] && dayBookings[time][groupType]) {
                         currentBooking = dayBookings[time][groupType];
                     }
@@ -560,12 +556,13 @@
                         slotDiv.classList.add('bg-red-50', 'border-red-200');
                         const detailsDl = document.createElement('dl');
                         detailsDl.classList.add('details-grid', 'mb-3');
+                        // Используем имена полей из SQL (bookingData.school_name) или JS (bookingData.schoolName)
                         const detailsToShow = {
                             "Actividad": currentBooking.activity,
                             "Centro": currentBooking.school_name || currentBooking.schoolName,
                             "Responsable": currentBooking.responsible,
                             "Email": currentBooking.email,
-                            "ID (DB)": currentBooking.id 
+                            "ID (DB)": currentBooking.id // Показываем ID из базы данных
                         };
                         for (const [key, value] of Object.entries(detailsToShow)) {
                             if (value) {
@@ -581,12 +578,14 @@
                         const editButton = document.createElement('button');
                         editButton.textContent = 'Corregir.';
                         editButton.classList.add('px-3', 'py-1', 'bg-yellow-500', 'text-white', 'rounded-md', 'text-sm', 'hover:bg-yellow-600');
+                        // Передаем currentBooking (который содержит ID из БД)
                         editButton.onclick = () => openBookingModal(true, currentBooking, dateStr, time, groupType);
                         buttonsDiv.appendChild(editButton);
 
                         const deleteButton = document.createElement('button');
                         deleteButton.textContent = 'Delete';
                         deleteButton.classList.add('px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'text-sm', 'hover:bg-red-600');
+                        // Передаем ID бронирования для удаления на бэкэнде
                         deleteButton.onclick = () => confirmDeletion(dateStr, time, groupType, currentBooking.id);
                         buttonsDiv.appendChild(deleteButton);
                         
@@ -626,9 +625,9 @@
             bookingForm.reset(); 
             currentEditingBookingInfo = { date, time, groupType, id: data ? data.id : null }; 
 
-            document.getElementById('bookingId').value = data ? data.id : ''; 
+            document.getElementById('bookingId').value = data ? data.id : ''; // Устанавливаем ID, если редактируем
             document.getElementById('bookingDate').value = date;
-            document.getElementById('bookingTime').value = time; 
+            document.getElementById('bookingTime').value = time;
             document.getElementById('bookingGroupType').value = groupType;
             document.getElementById('isEditing').value = String(isEdit);
 
@@ -641,11 +640,12 @@
                 saveBookingButton.classList.replace('bg-green-500', 'bg-yellow-500');
                 saveBookingButton.classList.replace('hover:bg-green-600', 'hover:bg-yellow-600');
 
+                // Используем имена полей из SQL (data.school_name) или JS (data.schoolName)
                 document.getElementById('activity').value = data.activity || '';
                 document.getElementById('schoolName').value = data.school_name || data.schoolName || '';
                 document.getElementById('area').value = data.area || '';
-                document.getElementById('assistant').value = data.assistant || ''; // For select
-                document.getElementById('professor').value = data.professor || ''; // For select
+                document.getElementById('assistant').value = data.assistant || '';
+                document.getElementById('professor').value = data.professor || '';
                 document.getElementById('course').value = data.course || '';
                 document.getElementById('responsible').value = data.responsible || '';
                 document.getElementById('phone').value = data.phone || '';
@@ -667,24 +667,27 @@
             document.getElementById('isEditing').value = "false";
         }
 
+        // Обработка отправки формы бронирования (с интеграцией бэкэнда)
         bookingForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             
             const isEditing = document.getElementById('isEditing').value === "true";
             if (!currentEditingBookingInfo) {
-                alert("Error: falta la información de la ranura.  Ошибка: информация о слоте отсутствует."); return;
+                alert("Ошибка: информация о слоте отсутствует."); return;
             }
-            const { date, time, groupType, id } = currentEditingBookingInfo; 
+            const { date, time, groupType, id } = currentEditingBookingInfo; // 'id' будет null для новых бронирований
 
+            // Данные из формы, соответствующие полям SQL таблицы `agenda`
             const bookingPayload = {
+                // id: id, // ID будет добавлен бэкэндом при создании, или используется для UPDATE
                 booking_date: date,
-                booking_time: time + ":00", 
+                booking_time: time, // Бэкэнд может ожидать 'HH:MM:SS'
                 group_type: groupType,
                 activity: document.getElementById('activity').value,
                 school_name: document.getElementById('schoolName').value,
-                area: document.getElementById('area').value || null, 
-                assistant: document.getElementById('assistant').value || null, // Gets value from select
-                professor: document.getElementById('professor').value || null, // Gets value from select
+                area: document.getElementById('area').value || null, // Отправляем null, если пусто, для SQL
+                assistant: document.getElementById('assistant').value || null,
+                professor: document.getElementById('professor').value || null,
                 course: document.getElementById('course').value || null,
                 responsible: document.getElementById('responsible').value || null,
                 phone: document.getElementById('phone').value || null,
@@ -697,37 +700,53 @@
                 let resultBookingData;
 
                 if (isEditing && id) {
-                    response = await fetch(`${API_BASE_URL}/${id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(bookingPayload)
-                    });
+                    // РЕАЛИЗАЦИЯ БЭКЭНДА: PUT-запрос для обновления существующего бронирования
+                    // response = await fetch(`${API_BASE_URL}/${id}`, {
+                    //     method: 'PUT',
+                    //     headers: { 'Content-Type': 'application/json' },
+                    //     body: JSON.stringify(bookingPayload)
+                    // });
+                    // if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    // resultBookingData = await response.json(); // Ожидаем обновленный объект бронирования с ID
+                    
+                    
+                    console.warn("БЭКЭНД НЕ РЕАЛИЗОВАН (ОБНОВЛЕНИЕ): Обновление в localStorage.");
+                    if (bookings[date] && bookings[date][time] && bookings[date][time][groupType]) {
+                        bookings[date][time][groupType] = {...bookings[date][time][groupType], ...bookingPayload, id: id}; // Сохраняем ID
+                        resultBookingData = bookings[date][time][groupType];
+                    } else { throw new Error("Запись для обновления не найдена в localStorage"); }
+
                 } else {
-                    response = await fetch(API_BASE_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(bookingPayload)
-                    });
+                    // РЕАЛИЗАЦИЯ БЭКЭНДА: POST-запрос для создания нового бронирования
+                    // response = await fetch(API_BASE_URL, {
+                    //     method: 'POST',
+                    //     headers: { 'Content-Type': 'application/json' },
+                    //     body: JSON.stringify(bookingPayload)
+                    // });
+                    // if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    // resultBookingData = await response.json(); // Ожидаем созданный объект бронирования с новым ID
+                    
+                    
+                    console.warn("БЭКЭНД НЕ РЕАЛИЗОВАН (СОЗДАНИЕ): Создание в localStorage.");
+                    if (!bookings[date]) bookings[date] = {};
+                    if (!bookings[date][time]) bookings[date][time] = {};
+                    // Генерируем временный ID для localStorage, если нет бэкэнда
+                    const tempId = `local_${Date.now()}`; 
+                    bookings[date][time][groupType] = {...bookingPayload, id: tempId };
+                    resultBookingData = bookings[date][time][groupType];
                 }
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({})); 
-                    throw new Error(`Error HTTP! estado: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
-                }
-                resultBookingData = await response.json();
+                // Обновляем локальный кэш 'bookings' данными с сервера (или заглушки)
+                if (!bookings[resultBookingData.booking_date]) bookings[resultBookingData.booking_date] = {};
+                const resTime = resultBookingData.booking_time.substring(0,5); // HH:MM
+                if (!bookings[resultBookingData.booking_date][resTime]) bookings[resultBookingData.booking_date][resTime] = {};
+                bookings[resultBookingData.booking_date][resTime][resultBookingData.group_type] = resultBookingData;
                 
-                const resDate = resultBookingData.booking_date;
-                const resTime = resultBookingData.booking_time ? resultBookingData.booking_time.substring(0,5) : '00:00';
-                const resGroup = resultBookingData.group_type;
-
-                if (!bookings[resDate]) bookings[resDate] = {};
-                if (!bookings[resDate][resTime]) bookings[resDate][resTime] = {};
-                bookings[resDate][resTime][resGroup] = resultBookingData;
-                
-                saveBookingsToLocalStorage(); 
+                // saveBookingsToLocalStorage(); // отключено // Сохраняем в localStorage (как бэкап или для оффлайн)
+                // exportBookingsToCSV(); // Можно экспортировать после каждого сохранения, если нужно
                 closeBookingModal();
                 renderCalendar(); 
-                alert(isEditing ? 'Reserva actualizada con éxito!' : 'Reserva guardada con éxito!');
+                alert(isEditing ? 'Reserva actualizada!' : 'Reserva guardada!');
 
             } catch (error) {
                 console.error("Ошибка при сохранении бронирования:", error);
@@ -735,7 +754,8 @@
             }
         });
 
-        function confirmDeletion(date, time, groupType, bookingId) { 
+        // Подтверждение удаления (с интеграцией бэкэнда)
+        function confirmDeletion(date, time, groupType, bookingId) { // bookingId - ID из базы данных
             currentEditingBookingInfo = { date, time, groupType, id: bookingId }; 
             const bookingDetails = bookings[date]?.[time]?.[groupType];
             confirmDeleteText.textContent = `Eliminar una reserva para "${bookingDetails?.school_name || bookingDetails?.schoolName || 'N/A'}" (ID: ${bookingId}) в ${time} (${groupType}) ${date}?`;
@@ -749,37 +769,46 @@
         
         confirmDeleteButton.onclick = async function() {
             if (!currentEditingBookingInfo || !currentEditingBookingInfo.id) {
-                 alert("Error: no se encontró el ID de reserva para eliminar.  Ошибка: ID бронирования для удаления не найден.");
+                 alert("Ошибка: ID бронирования для удаления не найден.");
                  closeConfirmDeleteModal();
                  return;
             }
             const { date, time, groupType, id } = currentEditingBookingInfo;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
-                if (!response.ok) { 
-                   if (response.status === 404) throw new Error("Бронирование не найдено на сервере.");
-                   const errorData = await response.json().catch(() => ({}));
-                   throw new Error(`Error HTTP! estado: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
-                }
-                console.log(`Бронирование с ID ${id} успешно удалено с сервера.`);
+                // РЕАЛИЗАЦИЯ БЭКЭНДА: DELETE-запрос к вашему API
+                // const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+                // if (!response.ok) { // response.ok === (status 200-299)
+                //    if (response.status === 404) throw new Error("Бронирование не найдено на сервере.");
+                //    throw new Error(`HTTP error! status: ${response.status}`);
+                // }
+                // console.log(`Бронирование с ID ${id} успешно удалено с сервера.`);
 
+                
+                console.warn(`БЭКЭНД НЕ РЕАЛИЗОВАН (УДАЛЕНИЕ): Удаление из localStorage бронирования с ID ${id}.`);
+                // Необходимо найти и удалить элемент по ID, если он есть, или по date/time/groupType
+                let deletedFromLocal = false;
                 if (bookings[date] && bookings[date][time] && bookings[date][time][groupType]) {
+                    // Убедимся, что удаляем правильный элемент, если ID совпадает
                     if (bookings[date][time][groupType].id === id) {
                         delete bookings[date][time][groupType];
                         if (Object.keys(bookings[date][time]).length === 0) delete bookings[date][time];
                         if (Object.keys(bookings[date]).length === 0) delete bookings[date];
+                        deletedFromLocal = true;
                     }
                 }
-                
-                saveBookingsToLocalStorage(); 
+                if (!deletedFromLocal) console.warn(`Не удалось найти бронирование с ID ${id} в localStorage для удаления по date/time/group.`);
+
+
+                // saveBookingsToLocalStorage(); // отключено // Обновляем localStorage
+                // exportBookingsToCSV(); // Можно экспортировать после удаления
                 renderCalendar();
                 closeSlotSelectionModal(); 
-                alert('Reserva eliminada con éxito.');
+                alert('Reserva de forma remota.');
 
             } catch (error) {
                 console.error("Ошибка при удалении бронирования:", error);
-                alert(`No se pudo eliminar la reserva: Не удалось удалить бронирование: ${error.message}`);
+                alert(`Не удалось удалить бронирование: ${error.message}`);
             } finally {
                 closeConfirmDeleteModal();
             }
@@ -791,18 +820,18 @@
             }
             const school = bookingData.school_name || bookingData.schoolName;
             const subject = `Confirmación de la reserva: ${bookingData.activity || 'Actividad'} - ${date} ${time}`;
-            const body = `Hola, ${bookingData.responsible || school || ''},\nesta es la confirmación de su reserv. \n\Actividad: ${bookingData.activity || 'N/A'}\nCentro: ${school || 'N/A'}\nFecha: ${date}\nHora: ${time}\nGrupo: ${groupType}\n\nObservaciones: ${bookingData.notes || '-'}\n\nAtentamente,\nsu Teatro de Carlet`;
+            const body = `Hola, ${bookingData.responsible || school || ''},\nesta es la confirmación de su reserv. \n\Actividad: ${bookingData.activity || 'N/A'}\nCentro: ${school || 'N/A'}\nFecha: ${date}\nHora: ${time}\nGrupo: ${groupType}\n\nObservaciones: ${bookingData.notes || '-'}\n\nAtentamente,\nsu Teatro_de_Carlet`;
             const mailtoLink = `mailto:${bookingData.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
         }
 
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() - 1);
-            loadBookingsFromServer(); 
+            renderCalendar(); // Данные уже загружены, просто перерисовываем
         });
         document.getElementById('nextMonth').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() + 1);
-            loadBookingsFromServer(); 
+            renderCalendar();
         });
         
         window.onclick = function(event) {
@@ -816,15 +845,17 @@
             }
         }
 
-        // Инициализация: Загружаем данные с сервера и рендерим календарь
-        loadBookingsFromServer(); 
-    
-        // Автообновление каждые 30 секунд
-        // setInterval(() => {
-        //    console.log("Автообновление данных с сервера...");
-        //    loadBookingsFromServer();
-        // }, 30000); 
+        // Инициализация: Загружаем данные (с сервера или из localStorage) и рендерим календарь
+        // loadBookings(); // Старая версия
+        loadBookingsFromServer(); // Новая версия, которая пытается сначала с сервера
 
-    </script>
+    
+// Автообновление каждые 30 секунд
+setInterval(() => {
+    console.log("Автообновление данных с сервера...");
+    loadBookingsFromServer();
+}, 30000);
+
+</script>
 </body>
 </html>

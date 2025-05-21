@@ -337,7 +337,7 @@
 
             } catch (error) {
                 console.error("Ошибка при загрузке бронирований с сервера:", error);
-                alert("Не удалось загрузить данные бронирований с сервера. Попытка загрузки из локального хранилища (если доступно).");
+                alert("No se pudo descargar la información de reserva del servidor. Intentando descargar desde el almacenamiento local (si está disponible).   Не удалось загрузить данные бронирований с сервера. Попытка загрузки из локального хранилища (если доступно). ");
                 const storedBookings = localStorage.getItem('calendarBookings');
                 if (storedBookings) {
                     bookings = JSON.parse(storedBookings);
@@ -406,7 +406,7 @@
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
             } else {
-                alert("Экспорт в CSV не поддерживается вашим браузером.");
+                alert("La exportación a CSV no es compatible con su navegador.  Экспорт в CSV не поддерживается вашим браузером.");
             }
         }
         exportCsvButton.addEventListener('click', exportBookingsToCSV);
@@ -672,7 +672,7 @@
             
             const isEditing = document.getElementById('isEditing').value === "true";
             if (!currentEditingBookingInfo) {
-                alert("Ошибка: информация о слоте отсутствует."); return;
+                alert("Error: falta la información de la ranura.  Ошибка: информация о слоте отсутствует."); return;
             }
             const { date, time, groupType, id } = currentEditingBookingInfo; 
 
@@ -749,7 +749,7 @@
         
         confirmDeleteButton.onclick = async function() {
             if (!currentEditingBookingInfo || !currentEditingBookingInfo.id) {
-                 alert("Ошибка: ID бронирования для удаления не найден.");
+                 alert("Error: no se encontró el ID de reserva para eliminar.  Ошибка: ID бронирования для удаления не найден.");
                  closeConfirmDeleteModal();
                  return;
             }
@@ -779,7 +779,7 @@
 
             } catch (error) {
                 console.error("Ошибка при удалении бронирования:", error);
-                alert(`Не удалось удалить бронирование: ${error.message}`);
+                alert(`No se pudo eliminar la reserva: Не удалось удалить бронирование: ${error.message}`);
             } finally {
                 closeConfirmDeleteModal();
             }

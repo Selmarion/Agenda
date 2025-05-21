@@ -33,6 +33,6 @@
 - Современный браузер с поддержкой JavaScript.
 
 ## Instalación
-    git clone https://github.com/Selmarion/agenda-diario
-    cd agenda-diario
+    git clone https://github.com/Selmarion/agenda
+    cd agenda
     sudo docker compose up --build -d

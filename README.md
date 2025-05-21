@@ -1,4 +1,4 @@
-# Agenda Diario
+# Agenda Diario (Español)
 
 🌐 Proyecto de calendario interactivo para reservas de actividades en un centro educativo o cultural.
 
@@ -12,15 +12,14 @@
 ## Requisitos
 - Navegador moderno (con soporte para JavaScript y CSS).
 
-
-## Instalación
 1. Clona el repositorio:
-   git clone https://github.com/Selmarion/agenda-diario
-   cd agenda-diario
-   sudo docker compose up --build -d
+## Instalación
+    git clone https://github.com/Selmarion/agenda
+    cd agenda
+    sudo docker compose up --build -d
 
 
-##  Agenda Diario (по-русски)
+##  Agenda Diario (Ruso по-русски) 
 ##  📅 Интерактивный календарь для бронирования занятий в учебном или культурном центре.
 
 ## Возможности

@@ -250,9 +250,6 @@
         <div class="mt-6 flex justify-between items-center">
             <button id="exportCsvButton" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">Export en CSV (local date)</button>
             <button id="printSummaryButton" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">Imprimir Resumen</button>
-            <button id="resetDataTop" class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
-                🧹 Restablecer datos
-            </button>
         </div>
     </div>
 
@@ -411,8 +408,7 @@
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
         const printSummaryButton = document.getElementById('printSummaryButton');
-        const resetDataTop = document.getElementById('resetDataTop'); // New button
-
+        
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado","Domingo"];
 
@@ -980,15 +976,7 @@
             loadBookingsFromServer(); 
         });
 
-        resetDataTop.addEventListener('click', () => {
-            if (confirm("¿Está seguro de que desea restablecer todos los datos? Esto eliminará todas las reservas almacenadas localmente.")) {
-                localStorage.removeItem('calendarBookings');
-                bookings = {};
-                renderCalendar();
-                alert("Datos restablecidos localmente.");
-            }
-        });
-        
+              
         window.onclick = function(event) {
             if (event.target == slotSelectionModal) closeSlotSelectionModal();
             if (event.target == bookingModal) closeBookingModal();

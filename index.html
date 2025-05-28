@@ -223,8 +223,8 @@
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center space-x-3">
                 <button id="prevMonth" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">&lt; Anterior</button>
-                <button id="themeToggle" class="px-3 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
-                    <i class="fas fa-sun" id="themeIcon"></i>
+                <button id="themeToggle" class="px-3 py-2 bg-gray-10 rounded-md hover:bg-gray-10 transition-colors">
+                <img id="themeIcon" src="sun.png" alt="Theme icon" class="w-6 h-6">
                 </button>
             </div>
             <h2 id="currentMonthYear" class="text-xl md:text-2xl font-semibold text-gray-400"></h2>
@@ -416,16 +416,23 @@
         function toggleTheme() {
             isDarkMode = !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
-            themeIcon.classList.toggle('fa-sun', !isDarkMode);
-            themeIcon.classList.toggle('fa-moon', isDarkMode);
+    
+            const icon = document.getElementById('themeIcon');
+            icon.src = isDarkMode ? 'luna.png' : 'sun.png';
+            icon.alt = isDarkMode ? 'Luna' : 'Sol';
+
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
         }
+
 
         // Initialize theme based on localStorage or system preference
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
                 isDarkMode = true;
+                themeIcon.src = isDarkMode ? 'luna.png' : 'sun.png';
+                themeIcon.alt = isDarkMode ? 'Luna' : 'Sol';
+
             } else if (savedTheme === 'light') {
                 isDarkMode = false;
             } else {
